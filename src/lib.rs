@@ -18,7 +18,7 @@ pub const PADDING: f32 = 20.0;
 
 pub const TOP_ROW_RANGE: Range<f32> = PADDING..PADDING + CARD_HEIGHT;
 pub const PLAYFIELD_RANGE: Range<f32> =
-    PADDING * 2. + CARD_HEIGHT..PADDING * 14. + CARD_HEIGHT * 2.;
+    (PADDING * 2. + CARD_HEIGHT)..(PADDING * 14. + CARD_HEIGHT * 2.);
 
 pub const SUITS: [FrenchSuit; 4] = [
     FrenchSuit::Clubs,
@@ -54,7 +54,7 @@ pub fn get_distance_to_card_origin(card: &Card) -> Option<(f32, f32)> {
 }
 
 pub fn get_lane_range(x: usize) -> Range<f32> {
-    let final_edge = |y: usize| (CARD_WIDTH + PADDING) * (y as f32) + PADDING;
+    let final_edge = |n: usize| (CARD_WIDTH + PADDING) * (n as f32) + PADDING;
 
     final_edge(x - 1)..final_edge(x)
 }

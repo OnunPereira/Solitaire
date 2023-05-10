@@ -42,43 +42,47 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn add_card_to_lane(&mut self, mut card: Card, lane_number: usize) -> bool {
+    pub fn add_card_to_lane(&mut self, mut card: Card, lane_number: usize, force: bool) -> bool {
         let lane = &mut self.playfield[lane_number - 1];
 
         if let Some(last_card_in_lane) = lane.last() {
             let &Card { rank, suit, .. } = last_card_in_lane;
 
-            let is_opposite_suit = match card.suit {
-                FrenchSuit::Clubs | FrenchSuit::Spades => {
-                    suit == FrenchSuit::Diamonds || suit == FrenchSuit::Hearts
-                }
-                FrenchSuit::Diamonds | FrenchSuit::Hearts => {
-                    suit == FrenchSuit::Clubs || suit == FrenchSuit::Spades
-                }
-            };
+            if !force {
+                let is_opposite_suit = match card.suit {
+                    FrenchSuit::Clubs | FrenchSuit::Spades => {
+                        suit == FrenchSuit::Diamonds || suit == FrenchSuit::Hearts
+                    }
+                    FrenchSuit::Diamonds | FrenchSuit::Hearts => {
+                        suit == FrenchSuit::Clubs || suit == FrenchSuit::Spades
+                    }
+                };
 
-            let can_stack = match card.rank {
-                Rank::Ace => rank == Rank::Two,
-                Rank::Two => rank == Rank::Three,
-                Rank::Three => rank == Rank::Four,
-                Rank::Four => rank == Rank::Five,
-                Rank::Five => rank == Rank::Six,
-                Rank::Six => rank == Rank::Seven,
-                Rank::Seven => rank == Rank::Eight,
-                Rank::Eight => rank == Rank::Nine,
-                Rank::Nine => rank == Rank::Ten,
-                Rank::Ten => rank == Rank::Jack,
-                Rank::Jack => rank == Rank::Queen,
-                Rank::Queen => rank == Rank::King,
-                Rank::King => false,
-            };
+                let can_stack = match card.rank {
+                    Rank::Ace => rank == Rank::Two,
+                    Rank::Two => rank == Rank::Three,
+                    Rank::Three => rank == Rank::Four,
+                    Rank::Four => rank == Rank::Five,
+                    Rank::Five => rank == Rank::Six,
+                    Rank::Six => rank == Rank::Seven,
+                    Rank::Seven => rank == Rank::Eight,
+                    Rank::Eight => rank == Rank::Nine,
+                    Rank::Nine => rank == Rank::Ten,
+                    Rank::Ten => rank == Rank::Jack,
+                    Rank::Jack => rank == Rank::Queen,
+                    Rank::Queen => rank == Rank::King,
+                    Rank::King => false,
+                };
 
-            if !is_opposite_suit || !can_stack {
-                let _ = &self.return_card_to_previous_stack(card);
-                return false;
+                if !is_opposite_suit || !can_stack {
+                    let _ = &self.return_card_to_previous_stack(card);
+                    return false;
+                }
             }
 
             card.update_pos(last_card_in_lane.x, last_card_in_lane.y + PADDING);
+        } else {
+            card.update_pos(get_lane_range(lane_number).start, PLAYFIELD_RANGE.start)
         }
 
         lane.push(card);
@@ -243,8 +247,8 @@ impl Board {
 
     pub fn return_card_to_previous_stack(&mut self, mut card: Card) -> bool {
         match self.hand_memory.previous_stack {
-            BoardArea::Lane(x) => self.add_card_to_lane(card, x),
             BoardArea::SuitStack(x) => self.add_card_to_suit(card, x),
+            BoardArea::Lane(x) => self.add_card_to_lane(card, x, true),
             BoardArea::Turned => {
                 card.update_pos(get_lane_range(6).start, TOP_ROW_RANGE.start);
                 self.turned.push(card);
